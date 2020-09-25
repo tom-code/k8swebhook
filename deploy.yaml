@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hook
+  labels:
+    app: hook
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hook
+  template:
+    metadata:
+      labels:
+        app: hook
+    spec:
+      containers:
+      - name: hook
+        image: hook.com/hook:1
+        ports:
+        - containerPort: 443
+        command: ["/kac"]
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hook
+spec:
+  selector:
+    app: hook
+  ports:
+    - protocol: TCP
+      port: 443
+      targetPort: 443
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: "hook.test.com"
+webhooks:
+- name: "hook.test.com"
+  rules:
+  - apiGroups:   [""]
+    apiVersions: ["v1"]
+    operations:  ["CREATE"]
+    resources:   ["pods"]
+    scope:       "Namespaced"
+  clientConfig:
+    service:
+      namespace: "default"
+      name: "hook"
+    caBundle: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUNyakNDQVpZQ0NRQ1dmZUZTOFFRWmZEQU5CZ2txaGtpRzl3MEJBUXNGQURBWk1Rc3dDUVlEVlFRR0V3SmoKZWpFS01BZ0dBMVVFQ0F3QmVEQWVGdzB5TURBNU1qVXhOekUyTWpsYUZ3MHlOVEE1TWpReE56RTJNamxhTUJreApDekFKQmdOVkJBWVRBbU42TVFvd0NBWURWUVFJREFGNE1JSUJJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBCk1JSUJDZ0tDQVFFQXlDS2dkcUZRdnE2d0ZqbEFiUjVhREtBS3h5Y1NQdnlMa2p3ZWc0YVhPV1h6UXJFRFZkR0gKSFNudGVScUhLZWtLcS9YakNqWkNzUHh6dmpLL00yUW55M0NyTUo3S3h2WUx2czdIWWkzR1hmQ09tS3VuZldsRgp4U3pPbG02R2hMYkNNaTIrL0ZzY1lMbkNkcXM3dXZmMlNxcUEvV0Nhb1dVMlFiN20vd3o1Z0FPclgrbC9mdHo4Ck5DRUhGWTNvaUk5Mm5YekYrYlR2YlZkbEZYZldRem52VGUvdmd4RTdxZEhrTHdFb1crY3hybzVSWWtSK0M5TmkKYzYycHVqNlJYYWd2QXBSaVZOVkptZlRqcFp6Z09DZEE2Mk9GNHc0TGY5UE4rczRodWp1enBiYU5jS09kcHZrRwoxWW40cyswb0RER1RhT1NmZ2FkZ3IzUW1JaVMvL3BWUVF3SURBUUFCTUEwR0NTcUdTSWIzRFFFQkN3VUFBNElCCkFRQTQrdkEvVkU3cWJhQlFGM0JtbjR0WTBqTExxTHFrSHBjTVRaRXptUkc0WnFvM3BuSy9aTFNMUTlkaDRoVWkKUTllVEExUUErclNWaGJTTnVFSE15cCtBR0R6YjVBUEtMMG1tRGJuWitaV2pSNWlFVXZIVzcyMmxWNWY1c2haMwpmbGhwWktCVW0vM2JDdWtxL3hrTEQrRXNqdGFmZWxOcVhLUG5ySDZ2NWx2RkVWZkZ1SjVzSEZ3R2NZYlBhQmZqCllJQVMvSzVBWVAyeVZiaUs2ckE0bHFIcVRnblBnSkZDVTZYTHFsYlFWSlAyRXc0bzJSeEhGb2ExSWFJTm5KWHAKalhqOXMyWFhZTTBZTGgrWUI0OFl0eFE1UjlMNytoTGhuOEsyOEF6SC9kY2lIeEpTRGdabjZ5ajhMd0R5Wk9ragpFZlo0LzRMOVBQYWtCRDZMdjU1QmlpMXEKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQ==
+
+  admissionReviewVersions: ["v1", "v1beta1"]
+  sideEffects: None
+  timeoutSeconds: 5
+
