@@ -24,6 +24,17 @@ func printJson(data []byte) {
 	log.Println(js)
 }
 
+const patch = `
+[{
+  "op": "add",
+  "path": "/spec/containers/-",
+  "value": {
+		"name": "demo",
+		"image": "demo"
+  }
+}]
+`
+
 type Handler struct {}
 func (h* Handler)ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("new request %s\n", r.RequestURI)
@@ -39,7 +50,7 @@ func (h* Handler)ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			log.Println(err)
 		}
 		log.Println(review.Request.UID)
-
+		patchType := admission.PatchTypeJSONPatch
 		resp := admission.AdmissionReview{
 			TypeMeta: metav1.TypeMeta {
 				Kind: "AdmissionReview",
@@ -47,6 +58,8 @@ func (h* Handler)ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Response: &admission.AdmissionResponse {
 				UID: review.Request.UID,
 				Allowed: true,
+				PatchType: &patchType,
+				Patch: []byte(patch),
 			},
 		}
 		respb, err := json.Marshal(&resp)
